@@ -5,16 +5,12 @@
 #define TAM_FILA 5
 #define TAM_PILHA 3
 
-// estrutura para representar uma peça
-
 typedef struct {
     char nome;
     int id;
 } Peca;
 
-// variáveis
-
-// Fila circular
+// variáveis para fila e pilha
 Peca fila[TAM_FILA];
 int inicio = 0, fim = 0, tamanho = 0;
 
@@ -27,12 +23,10 @@ int contadorID = 0;
 
 // função para gerar uma peça aleatória
 Peca gerarPeca() {
-    char tipos[] = {'I', 'O', 'T', 'L'};
-
+    char tipos[] = {'I','O','T','L'};
     Peca p;
     p.nome = tipos[rand() % 4];
     p.id = contadorID++;
-
     return p;
 }
 
@@ -44,7 +38,7 @@ void enqueue(Peca p) {
     if (tamanho < TAM_FILA)
         tamanho++;
     else
-        inicio = (inicio + 1) % TAM_FILA; // sobrescreve (não deve ocorrer aqui)
+        inicio = (inicio + 1) % TAM_FILA;
 }
 
 Peca dequeue() {
@@ -56,107 +50,137 @@ Peca dequeue() {
 
 // funções para pilha
 int push(Peca p) {
-    if (topo == TAM_PILHA - 1) {
-        printf("Pilha cheia!\n");
-        return 0;
-    }
+    if (topo == TAM_PILHA - 1) return 0;
     pilha[++topo] = p;
     return 1;
 }
 
 int pop(Peca* p) {
-    if (topo == -1) {
-        printf("Pilha vazia!\n");
-        return 0;
-    }
+    if (topo == -1) return 0;
     *p = pilha[topo--];
     return 1;
 }
 
 // função para mostrar o estado atual da fila e pilha
-void mostrarEstado() {
+void mostrar() {
     printf("\nFila: ");
     for (int i = 0; i < tamanho; i++) {
         int idx = (inicio + i) % TAM_FILA;
         printf("[%c %d] ", fila[idx].nome, fila[idx].id);
     }
 
-    printf("\nPilha (Topo -> Base): ");
-    if (topo == -1) {
-        printf("vazia");
-    } else {
-        for (int i = topo; i >= 0; i--) {
+    printf("\nPilha (Topo->Base): ");
+    if (topo == -1) printf("vazia");
+    else {
+        for (int i = topo; i >= 0; i--)
             printf("[%c %d] ", pilha[i].nome, pilha[i].id);
-        }
     }
     printf("\n");
 }
 
 // função para inicializar a fila com peças aleatórias
-void inicializarFila() {
-    for (int i = 0; i < TAM_FILA; i++) {
+void inicializar() {
+    for (int i = 0; i < TAM_FILA; i++)
         enqueue(gerarPeca());
-    }
 }
 
 // funções para as operações do jogo
-void jogarPeca() {
+void jogar() {
     Peca p = dequeue();
     printf("Jogou: [%c %d]\n", p.nome, p.id);
-
     enqueue(gerarPeca());
 }
 
-void reservarPeca() {
+// função para reservar a peça da frente da fila
+void reservar() {
     if (topo == TAM_PILHA - 1) {
-        printf("Pilha cheia! Não pode reservar.\n");
+        printf("Pilha cheia!\n");
         return;
     }
 
     Peca p = dequeue();
+    push(p);
+    printf("Reservou: [%c %d]\n", p.nome, p.id);
 
-    if (push(p)) {
-        printf("Reservou: [%c %d]\n", p.nome, p.id);
-        enqueue(gerarPeca());
-    }
+    enqueue(gerarPeca());
 }
 
+// função para usar a peça da reserva
 void usarReserva() {
     Peca p;
-
-    if (pop(&p)) {
-        printf("Usou reserva: [%c %d]\n", p.nome, p.id);
-        enqueue(gerarPeca());
+    if (!pop(&p)) {
+        printf("Pilha vazia!\n");
+        return;
     }
+
+    printf("Usou: [%c %d]\n", p.nome, p.id);
+    enqueue(gerarPeca());
+}
+
+// função para trocar o topo da pilha com a frente da fila
+void trocarTopo() {
+    if (topo == -1) {
+        printf("Pilha vazia!\n");
+        return;
+    }
+
+    int idx = inicio;
+
+    Peca temp = fila[idx];
+    fila[idx] = pilha[topo];
+    pilha[topo] = temp;
+
+    printf("Troca realizada!\n");
+}
+
+// função para trocar os 3 elementos do topo da pilha com os 3 da frente da fila
+void trocaMultipla() {
+    if (tamanho < 3 || topo < 2) {
+        printf("Nao ha elementos suficientes!\n");
+        return;
+    }
+
+    for (int i = 0; i < 3; i++) {
+        int idx = (inicio + i) % TAM_FILA;
+
+        Peca temp = fila[idx];
+        fila[idx] = pilha[topo - i];
+        pilha[topo - i] = temp;
+    }
+
+    printf("Troca multipla realizada!\n");
 }
 
 
 int main() {
     int op;
-
     srand(time(NULL));
 
-    inicializarFila();
+    inicializar();
 
     do {
-        mostrarEstado();
+        mostrar();
 
-        printf("\n1 Jogar peça\n");
-        printf("2 Reservar peça\n");
-        printf("3 Usar peça reservada\n");
+        printf("\n1 Jogar\n");
+        printf("2 Reservar\n");
+        printf("3 Usar reserva\n");
+        printf("4 Trocar topo com frente\n");
+        printf("5 Troca multipla (3x3)\n");
         printf("0 Sair\n");
         printf("Opcao: ");
         scanf("%d", &op);
 
-        switch (op) {
-            case 1: jogarPeca(); break;
-            case 2: reservarPeca(); break;
+        switch(op) {
+            case 1: jogar(); break;
+            case 2: reservar(); break;
             case 3: usarReserva(); break;
+            case 4: trocarTopo(); break;
+            case 5: trocaMultipla(); break;
             case 0: printf("Encerrando...\n"); break;
             default: printf("Opcao invalida!\n");
         }
 
-    } while (op != 0);
+    } while(op != 0);
 
     return 0;
 }
