@@ -4,6 +4,7 @@
 
 #define MAX 5
 
+
 // definição da estrutura para representar uma peça do Tetris
 typedef struct {
     char nome; // tipo da peça
